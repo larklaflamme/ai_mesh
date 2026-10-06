@@ -1,0 +1,14 @@
+name: ai-mesh
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.12
+  - pip
+  - nodejs=22          # needed for front-end tooling, jscpd, Playwright helpers
+  - make
+  - git
+  - openssh
+  - go                 # builds the gitleaks pre-commit hook (no toolchain download)
+  - pip:
+      - uv             # fast, hash-locking installer; works inside the active conda env

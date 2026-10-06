@@ -1,0 +1,53 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mesh-worker"
+version = "0.1.0"
+description = "AI Mesh worker runtime — runs inside workspace containers only"
+requires-python = ">=3.12,<3.13"
+# Keep this list small: it is installed in every workspace image.
+# Harness extras (deepagents, openhands-sdk, ...) are added per adapter in Phases 1–2 (HC-11).
+dependencies = [
+  "pydantic>=2", "httpx", "langchain-openai", "langchain-core",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest", "pytest-asyncio", "pytest-timeout", "pytest-cov", "respx",
+  "mypy", "ruff",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mesh_worker"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF", "PT", "ASYNC", "DTZ"]
+ignore = ["S101"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --timeout=300"
+markers = [
+  "unit: pure functions and classes, no external deps",
+  "integration: against a fake gateway",
+  "contract: adapter contract",
+  "conformance: fault injection",
+  "security: isolation",
+  "e2e: real model (never in CI)",
+  "gpu: GPU benchmarks",
+]
+asyncio_mode = "auto"

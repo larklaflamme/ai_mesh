@@ -1,0 +1,68 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mesh"
+version = "0.1.0"
+description = "AI Mesh prototype — control-plane platform"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "pydantic>=2", "pydantic-settings", "structlog", "typer", "rich", "pyyaml", "jinja2",
+  "httpx", "anyio", "tenacity",
+  "sqlalchemy>=2", "alembic", "psycopg[binary]",
+  "langgraph", "langgraph-checkpoint-postgres", "langchain-core", "langchain-openai",
+  "qdrant-client", "fastembed",
+  "docker",
+  "tokenizers",
+  "duckdb", "pyarrow",
+  "grimp",
+  "python-ulid",
+  "opentelemetry-sdk",
+  "zstandard",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest", "pytest-asyncio", "pytest-xdist", "pytest-cov", "pytest-timeout",
+  "hypothesis", "respx", "testcontainers[postgres]",
+  "mypy", "ruff", "import-linter", "pre-commit",
+  "types-PyYAML", "types-docker",
+  "setuptools",  # keeps conda's distutils-precedence.pth working under `uv pip sync`
+]
+
+[project.scripts]
+mesh = "mesh.cli.main:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mesh"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF", "PT", "ASYNC", "DTZ"]
+ignore = ["S101"]           # assert allowed in tests via per-file below
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --timeout=300"
+markers = [
+  "unit: pure functions and classes, no external deps",
+  "integration: module + real PostgreSQL/Qdrant/Docker (Testcontainers)",
+  "contract: interface conformance (adapters, gateway OpenAI-compat, schemas)",
+  "conformance: durability, fencing, gates, fault injection",
+  "security: isolation and oracle-gaming red team",
+  "e2e: full flows with the real model through the tunnel (never in CI)",
+  "gpu: benchmarks touching the GPU",
+]
+asyncio_mode = "auto"

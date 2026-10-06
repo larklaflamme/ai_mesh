@@ -1,0 +1,69 @@
+# Platform CI. Runs only platform code and synthetic fixtures — never agent-generated code,
+# never the GPU (LLM calls come from cassettes). Every action is pinned by full commit SHA
+# (07 RV-14); the tag is in the trailing comment.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash -el {0}   # login shell so the conda env is active
+    env:
+      MESH_ALLOW_SKIP_DOCKER: "0"   # a missing Docker is a failure in CI
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: conda-incubator/setup-miniconda@be893c923ea9cf1cf7cd510fbdde27c7e18cbdcb  # v4.1.0
+        with:
+          miniforge-version: latest
+          environment-file: environment.yml
+          activate-environment: ai-mesh
+          conda-remove-defaults: true
+
+      - name: Install (hashed lock + editable packages)
+        run: make install
+
+      - name: Lint (ruff + import-linter)
+        run: make lint
+
+      - name: Type check (mypy --strict)
+        run: make typecheck
+
+      - name: Unit tests
+        run: >-
+          make test-unit PYTEST_ARGS="--junitxml=junit-unit.xml
+          --cov=src --cov-branch --cov-report=xml:coverage-unit.xml"
+
+      - name: Integration and contract tests
+        run: >-
+          make test-int PYTEST_ARGS="--junitxml=junit-int.xml
+          --cov=src --cov-branch --cov-report=xml:coverage-int.xml"
+
+      - name: Secret scan (gitleaks)
+        run: pre-commit run gitleaks --all-files
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: test-reports
+          path: |
+            */junit-*.xml
+            */coverage-*.xml
+          if-no-files-found: warn
