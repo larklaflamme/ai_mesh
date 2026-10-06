@@ -1,0 +1,31 @@
+# python
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage*
+coverage.xml
+junit*.xml
+htmlcov/
+*.egg-info/
+dist/
+build/
+# env & secrets
+.env
+.env.*
+!.env.example
+infra/secrets/
+*.pem
+*_ed25519*
+# runtime data
+runs/
+data/
+*.parquet
+*.duckdb
+# node
+node_modules/
+# os/editor
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,25 @@
+[importlinter]
+root_packages =
+    mesh
+
+[importlinter:contract:layers]
+name = Platform layering (higher may import lower, never the reverse)
+type = layers
+layers =
+    mesh.cli
+    mesh.evaluation
+    mesh.orchestration
+    mesh.agents | mesh.judge | mesh.oracle | mesh.workspace | mesh.knowledge | mesh.scm | mesh.workers
+    mesh.capacity | mesh.governance
+    mesh.llm
+    mesh.telemetry
+    mesh.core
+
+[importlinter:contract:judge-independent]
+name = Judge must not depend on workers or agents (independence of verification)
+type = forbidden
+source_modules =
+    mesh.judge
+forbidden_modules =
+    mesh.workers
+    mesh.agents
